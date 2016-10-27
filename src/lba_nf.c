@@ -29,7 +29,7 @@ struct regionInfo{
   struct blockInfo blkInfo; //!< block information structure
 };
 
-struct driveInfo{
+struct driverInfo{
    uint16_t numRgns; //!< Numbers of region a driver
    uint16_t numBlks; //!< Numbers of blocks a driver
    uint32_t numSecs; //!< Numbers of sectors a driver
@@ -38,7 +38,7 @@ struct driveInfo{
 };
 
 
-struct driveInfo drvInfo; //!< Driver information structure
+struct driverInfo drvInfo; //!< Driver information structure
 
 // Internal function 
 static void nf_writePage(uint32_t addr, uint8_t *buf);
@@ -46,17 +46,17 @@ static void nf_readPage(uint32_t addr, uint8_t *buf);
 static void nf_eraseBlock(uint32_t addr);
 static void nf_writeBytes(uint32_t addr, uint8_t *buf, uint16_t size);
 static void nf_readBytes(uint32_t addr, uint8_t *buf, uint16_t size);
-static void discoverLsa2psaTable(struct driveInfo *drv);
-static void discoverLba2pbaTable(struct driveInfo *drv);
-static uint8_t findFreeSector(uint8_t rls, struct driveInfo *drv);
-static void mergeTwoBlocks(struct driveInfo *drv, uint16_t blk);
-static void lba2pba(uint16_t logBlk, struct driveInfo* drv);
-static uint16_t findFreeBlock(struct driveInfo *drv);
+static void discoverLsa2psaTable(struct driverInfo *drv);
+static void discoverLba2pbaTable(struct driverInfo *drv);
+static uint8_t findFreeSector(uint8_t rls, struct driverInfo *drv);
+static void mergeTwoBlocks(struct driverInfo *drv, uint16_t blk);
+static void lba2pba(uint16_t logBlk, struct driverInfo* drv);
+static uint16_t findFreeBlock(struct driverInfo *drv);
 static void buildBlkInfo(uint16_t blk0, uint16_t blk1, struct blockInfo *blkInfo);
 static void eraseBlock(uint16_t blk);
 static void resetBlockInfo(struct blockInfo *blkInfo);
-static void driverFlush(struct driveInfo *drv);
-static void writeRlb(uint16_t phyBlk, uint16_t rlb, struct driveInfo *drv);
+static void driverFlush(struct driverInfo *drv);
+static void writeRlb(uint16_t phyBlk, uint16_t rlb, struct driverInfo *drv);
 
 void nfTest()
 {
@@ -435,7 +435,7 @@ static void buildBlkInfo(uint16_t blk0, uint16_t blk1, struct blockInfo *blkInfo
  *
  * @param      drv   Pointer to the driver information structure
  ******************************************************************************/
-void discoverLsa2psaTable(struct driveInfo *drv)
+void discoverLsa2psaTable(struct driverInfo *drv)
 {
   struct blockInfo *blkInfo = &drv->rgnInfo.blkInfo;
   uint32_t addr;
@@ -461,7 +461,7 @@ void discoverLsa2psaTable(struct driveInfo *drv)
  * physical sector number with currSec, update Nor flash info sector sector index.
  * And update block info structure blkMap and currSec. 
  ******************************************************************************/
-static uint8_t findFreeSector(uint8_t rls, struct driveInfo *drv)
+static uint8_t findFreeSector(uint8_t rls, struct driverInfo *drv)
 {
   struct blockInfo *blkInfo = &drv->rgnInfo.blkInfo;
   int8_t i;
@@ -551,7 +551,7 @@ static void resetBlockInfo(struct blockInfo *blkInfo)
  * sector map and update logical number in the new block. 
  * 
  ******************************************************************************/
-static void mergeTwoBlocks(struct driveInfo *drv, uint16_t blk)
+static void mergeTwoBlocks(struct driverInfo *drv, uint16_t blk)
 {
   struct blockInfo *blkInfo = &drv->rgnInfo.blkInfo;
   int8_t i;
@@ -601,7 +601,7 @@ static void mergeTwoBlocks(struct driveInfo *drv, uint16_t blk)
  *
  * @param      drv   The pointer to driver information structure. 
  ******************************************************************************/
-static void driverFlush(struct driveInfo *drv)
+static void driverFlush(struct driverInfo *drv)
 {
   struct blockInfo *blkInfo = &drv->rgnInfo.blkInfo;
   uint16_t phyBlk, tmp;
@@ -632,7 +632,7 @@ static void driverFlush(struct driveInfo *drv)
  * to the logical block number, then find a new block. and update region current
  * block number with physical block number. 
  ******************************************************************************/
-static void lba2pba(uint16_t logBlk, struct driveInfo *drv)
+static void lba2pba(uint16_t logBlk, struct driverInfo *drv)
 {
   uint16_t rgn, phyBlk;
 
@@ -668,7 +668,7 @@ static void lba2pba(uint16_t logBlk, struct driveInfo *drv)
  * block number, combine them into new block. 
  * 
  ******************************************************************************/
-static void discoverLba2pbaTable(struct driveInfo *drv)
+static void discoverLba2pbaTable(struct driverInfo *drv)
 {
   struct regionInfo *rgnInfo = &drv->rgnInfo;
   int16_t i;
@@ -711,7 +711,7 @@ static void discoverLba2pbaTable(struct driveInfo *drv)
  * @param[in]  rlb     The relative logical block number
  * @param      drv     The pointer to driver information structure. 
  ******************************************************************************/
-static void writeRlb(uint16_t phyBlk, uint16_t rlb, struct driveInfo *drv)
+static void writeRlb(uint16_t phyBlk, uint16_t rlb, struct driverInfo *drv)
 {
   uint32_t addr;
 
@@ -733,7 +733,7 @@ static void writeRlb(uint16_t phyBlk, uint16_t rlb, struct driveInfo *drv)
  * counter block as the new block. 
  * 
  ******************************************************************************/
-static uint16_t findFreeBlock(struct driveInfo *drv)
+static uint16_t findFreeBlock(struct driverInfo *drv)
 {
   int16_t i;
   uint16_t startBlk, tmp, phyBlk;
