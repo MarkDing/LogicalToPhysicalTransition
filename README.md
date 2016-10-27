@@ -1,20 +1,20 @@
 Nor Flash Logical To Physical Transition
 ========================
-## 1. Introduction
-One specific requirement on MCS8051 USB mass storage device, the storage media is a 64 Mb Nor Flash, page size is 4096 bytes. The flash working method is that it can be read by byte unit. However, it cannot write without page erase. If we erase every page before write, the write performance is extremely low. And the life time for frequently write page will be much shorter. 
+## 1. Introduction  
+One specific requirement on MCS8051 USB mass storage device, the storage media is a 64 Mb Nor Flash, page size is 4096 bytes. The flash working method is that it can be read by byte unit. However, it cannot write without page erase. If we erase every page before write, the write performance is extremely low. And the life time for frequently write page will be much shorter.   
 
-Consider above disadvantage, we need to implement logical to physical address mapping method. When overwrite the existing page, the data can be written into new free physical page without erasing existing one, just update logical to physical address mapping array. That helps greatly on read/write performance. And at the meaning time , the wear leveling technology can be implemented here to average the write/erase times for each page.
+Consider above disadvantage, we need to implement logical to physical address mapping method. When overwrite the existing page, the data can be written into new free physical page without erasing existing one, just update logical to physical address mapping array. That helps greatly on read/write performance. And at the meaning time , the wear leveling technology can be implemented here to average the write/erase times for each page.  
 
-The logical to physical transition is popular in NAND flash for mass storage device. Compare with NAND flash, the Nor Flash advantage is that it doesn't need ECC correction, no bad block management. It is much easier to maintain the address transition and wear leveling. 
+The logical to physical transition is popular in NAND flash for mass storage device. Compare with NAND flash, the Nor Flash advantage is that it doesn't need ECC correction, no bad block management. It is much easier to maintain the address transition and wear leveling.  
 
-## 2. Design Method
-Hardware:
-* MCS8051 MCU-EFM8UB2, 16 KB flash memory, 256 bytes standard 8051 RAM, 1024 bytes on-chip XRAM.
-* Nor Flash MX25L6433F, 64Mb size, erase unit(page) is 4K bytes. 
+## 2. Design Method  
+Hardware:  
+* MCS8051 MCU-EFM8UB2, 16 KB flash memory, 256 bytes standard 8051 RAM, 1024 bytes on-chip XRAM.  
+* Nor Flash MX25L6433F, 64Mb size, erase unit(page) is 4K bytes.  
 
-This is resource constrain system. we cannot make all logical to physical mapping in the small size XRAM. What we should do is that divide whole flash into several regions. Each region keeps a logical block to physical block mapping address. The block size should be same as erase unit size, which is 4K bytes. The 4K bytes is still much bigger than MCU XRAM, we divide the block into several sectors. The trade off result is 128 bytes per sector. 
+This is resource constrain system. we cannot make all logical to physical mapping in the small size XRAM. What we should do is that divide whole flash into several regions. Each region keeps a logical block to physical block mapping address. The block size should be same as erase unit size, which is 4K bytes. The 4K bytes is still much bigger than MCU XRAM, we divide the block into several sectors. The trade off result is 128 bytes per sector.  
 
-Detail information about the memory layout. 
+Detail information about the memory layout.  
 
 1. There are 16 regions, 512K bytes per region.  
 2. There are 512K / 4K = 128 blocks per region, including 126 data blocks and 2 exchange blocks for data exchange buffer usage.   
@@ -29,7 +29,7 @@ c. Relative sector index logical value(0-30), 1 byte for each sector, total 31 b
 
 
 ![Memory Layout][mem-layout]  
-__Figure 1 Memory Layout__
+__Figure 1 Memory Layout__  
 
 ## 3. Detailed List of Functions
 This section discusses the detailed function declarations in the Nor FLash logical to physical transition firmware example.  
@@ -68,7 +68,7 @@ The function first checks the sector number within the boundary. And then calcul
 __Figure 3 Read Sector__  
 
 
-### 3.3 Logical to Physical Block Transition 
+### 3.3 Logical to Physical Block Transition  
 Logical block address(lba) convert to physical block address(pba).  
 __Syntax__  
 static void lba2pba(uint16_t logBlk, struct driverInfo *drv)  
@@ -78,7 +78,7 @@ drv: Pointer to the driver information structure
 __Return Value__  
 None  
 __Description__  
-The function first checks region number. If the region number is different, that means the current region mapping is not in the ram. Call discover logical block to physical block function to build the mapping array. Get physical block number from the map. If there is no physical block corresponds to the logical block number, then find a new block. Build up sector mapping within the founded physical block. and update region current block number with physical block number. 
+The function first checks region number. If the region number is different, that means the current region mapping is not in the ram. Call discover logical block to physical block function to build the mapping array. Get physical block number from the map. If there is no physical block corresponds to the logical block number, then find a new block. Build up sector mapping within the founded physical block. and update region current block number with physical block number.  
 
 
 ![LBA2PBA][lba2pba]  
@@ -104,7 +104,7 @@ __Figure 5 Discover LBA2PBA Table__
 
 
 ### 3.5 Driver Flush  
-Flush last block info into flash and build sector map for current block. 
+Flush last block info into flash and build sector map for current block.  
 __Syntax__  
 static void driverFlush(struct driverInfo *drv)  
 __Prameters__  
@@ -112,7 +112,7 @@ drv: Pointer to the driver information structure
 __Return Value__  
 None  
 __Description__  
-This function check if the block number is changed. If previous block has only one block map to the logical block, then simple discover sector mapping array in current block. If the previous blocks has two physical blocks map to same logical block, then we need to merge them into a new block. and then discover sector mapping array in current. 
+This function check if the block number is changed. If previous block has only one block map to the logical block, then simple discover sector mapping array in current block. If the previous blocks has two physical blocks map to same logical block, then we need to merge them into a new block. and then discover sector mapping array in current.  
 
 ![Driver Flush][driverFlush]  
 __Figure 6 Driver Flush__  
@@ -124,8 +124,8 @@ Build block information with two given blocks. And update block information with
 __Syntax__  
 static void buildBlkInfo(uint16_t blk0, uint16_t blk1, struct blockInfo *blkInfo)  
 __Prameters__  
-blk0: Physical block number for first block 
-blk1: Physical block number for second block
+blk0: Physical block number for first block  
+blk1: Physical block number for second block  
 blkInfo: Pointer to the block information structure  
 __Return Value__  
 None  
@@ -158,7 +158,7 @@ Find free sector for given the relative logical sector.
 __Syntax__  
 static uint8_t findFreeSector(uint8_t rls, struct driverInfo *drv)  
 __Prameters__  
-rls: Relative logic sector number.
+rls: Relative logic sector number.  
 drv: Pointer to the driver information structure  
 __Return Value__  
 The new physical block number  
@@ -166,8 +166,8 @@ __Description__
 This function checks current block. If current block is full, and if there is previous block, then find a new free block and combine two blocks into the new free blocks. If the new block is full after merging, then find new block and update block information structure. Get relative physical sector number with currSec, update Nor flash info sector sector index. And update block info structure blkMap and currSec.  
 
 
-![Find Free Sector][findFreeSector]
-__Figure 9 Find Free Sector__
+![Find Free Sector][findFreeSector]  
+__Figure 9 Find Free Sector__  
 
 
 
@@ -190,7 +190,7 @@ __Figure 10 Merge Two Blocks__
 
 
 ## 4. Source Code
-There is Virtual Studio 2013 project included for logical to physical transition simulation. Using a file to act as Nor Flash. File read/write in low level Nor flash read/write function. It can be easily porting to any other platform. 
+There is Virtual Studio 2013 project included for logical to physical transition simulation. Using a file to act as Nor Flash. File read/write in low level Nor flash read/write function. It can be easily porting to any other platform.  
 
 
 
