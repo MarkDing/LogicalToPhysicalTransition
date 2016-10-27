@@ -214,8 +214,20 @@ void driveInit()
   resetBlockInfo(&drvInfo.rgnInfo.blkInfo);
 }
 
+
 /***************************************************************************//**
- * Write a sector data into driver
+ * @brief      Write a sector data into flash driver
+ *
+ * @param[in]  sec  Absolute sector number
+ * @param      buf   Pointer to data buffer to be read
+ * 
+ * @return     0: Success; -1: Failure
+ * 
+ * Detailed description: The function first check the sector number within the 
+ * boundary. And then calculate the block number. Call logical block to physical 
+ * block transition function to get the physical block number. And then find 
+ * free sector within this physical block. Calculate physical address and write 
+ * sector data into it.  
  ******************************************************************************/
 int8_t writeSector(uint32_t sec, uint8_t *buf)
 {
@@ -243,8 +255,21 @@ int8_t writeSector(uint32_t sec, uint8_t *buf)
   return 0;
 }
 
+
 /***************************************************************************//**
- * Read a sector data from driver
+ * @brief      Read a sector data from flash
+ *
+ * @param[in]  sec  Absolute sector number
+ * @param      buf   Pointer to data buffer to be read
+ * 
+ * @return     0: Success; -1: Failure
+ * 
+ * Detailed description: The function first checks the sector number within the 
+ * boundary. And then calculate the block number. Call logical block to physical
+ * block transition function to get the physical block number. If the sector is 
+ * already mapped, get physical sector number from mapping array, if not then 
+ * find free sector within this physical block. Calculate physical address and 
+ * read data from the physical sector.  
  ******************************************************************************/
 int8_t readSector(uint32_t sec, uint8_t *buf)
 {
@@ -397,6 +422,13 @@ static uint8_t readSector_map(uint32_t addr, uint8_t *map)
  * @param[in]  blk1     The second block number
  * @param      blkInfo  The block information structure which will be fully 
  *                      updated by reading two blocks sector mapping information.
+ *                      
+ * Detailed Description: This function determine which block is current block 
+ * by checking last sector index value in information sector. If the last sector 
+ * index has valid value that means the block is full, and set it as previous 
+ * block, the other block set as current block. Discover previous block sector 
+ * index mapping array. And then discover current block sector index mapping 
+ * array. Update structure blkInfo members with all information we get.
  ******************************************************************************/
 static void buildBlkInfo(uint16_t blk0, uint16_t blk1, struct blockInfo *blkInfo)
 {
@@ -454,12 +486,12 @@ void discoverLsa2psaTable(struct driverInfo *drv)
  *
  * @return     relative physical sector number (rps)
  * 
- * Detailed description: First, it checks current block. If current block is
- * full, and if there is previous block, then find a new free block and combine
- * two blocks into the new free blocks. If the new block is full after merging,
- * then find new block and update block information structure. Get relative 
- * physical sector number with currSec, update Nor flash info sector sector index.
- * And update block info structure blkMap and currSec. 
+ * Detailed description: This function checks current block. If current block 
+ * is full, and if there is previous block, then find a new free block and 
+ * combine two blocks into the new free blocks. If the new block is full after 
+ * merging, then find new block and update block information structure. Get 
+ * relative physical sector number with currSec, update Nor flash info sector 
+ * sector index. And update block info structure blkMap and currSec. 
  ******************************************************************************/
 static uint8_t findFreeSector(uint8_t rls, struct driverInfo *drv)
 {
@@ -596,10 +628,16 @@ static void mergeTwoBlocks(struct driverInfo *drv, uint16_t blk)
 
 
 /***************************************************************************//**
- * @brief      If the block number change, combine two blocks or discover sector
- * map in the new block. 
+ * @brief      Flush last block info into flash and build sector map for current 
+ * block
  *
- * @param      drv   The pointer to driver information structure. 
+ * @param      drv   Pointer to driver information structure. 
+ * 
+ * Detailed description: This function check if the block number is changed. 
+ * If previous block has only one block map to the logical block, then simple 
+ * discover sector mapping array in current block. If the previous blocks has 
+ * two physical blocks map to same logical block, then we need to merge them 
+ * into a new block. and then discover sector mapping array in current.
  ******************************************************************************/
 static void driverFlush(struct driverInfo *drv)
 {
@@ -627,9 +665,12 @@ static void driverFlush(struct driverInfo *drv)
  * @param[in]  logBlk  The logical block number
  * @param      drv     The pointer to the driver information structure
  * 
- * Detailed description: If the region number is difference, discover the logical
- * block to physical block map at first. if there is no physical block corresponds
- * to the logical block number, then find a new block. and update region current
+ * Detailed description: The function first checks region number. If the region 
+ * number is different, that means the current region mapping is not in the ram. 
+ * Call discover logical block to physical block function to build the mapping 
+ * array. Get physical block number from the map. If there is no physical block 
+ * corresponds to the logical block number, then find a new block. Build up 
+ * sector mapping within the founded physical block. and update region current 
  * block number with physical block number. 
  ******************************************************************************/
 static void lba2pba(uint16_t logBlk, struct driverInfo *drv)
@@ -663,10 +704,10 @@ static void lba2pba(uint16_t logBlk, struct driverInfo *drv)
  *
  * @param      drv   The pointer to driver information structure
  * 
- * Detailed description: Read every block's info sector within region, to build
- * mapping array. If there are two or more physical blocks contain same logical 
- * block number, combine them into new block. 
- * 
+ * Detailed description: The function read every physical block's info sector 
+ * to get logical block number within a region, and build a logical to physical 
+ * block mapping array. If there are two or more physical blocks map to same 
+ * logical block number, combine them into new block. 
  ******************************************************************************/
 static void discoverLba2pbaTable(struct driverInfo *drv)
 {
@@ -728,10 +769,8 @@ static void writeRlb(uint16_t phyBlk, uint16_t rlb, struct driverInfo *drv)
  *
  * @return     The new physical block number
  * 
- * Detailed description: Read info sector within a region, if the logical number 
- * is NF_INIT_VALUE, then read the erase counter and take the minimum erase 
- * counter block as the new block. 
- * 
+ * Detailed description: This function search every block info sector within a 
+ * region. Find a free block with minimum erase times. That is wear leveling. 
  ******************************************************************************/
 static uint16_t findFreeBlock(struct driverInfo *drv)
 {

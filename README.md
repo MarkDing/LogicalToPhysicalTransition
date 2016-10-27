@@ -73,7 +73,7 @@ Logical block address(lba) convert to physical block address(pba).
 __Syntax__  
 static void lba2pba(uint16_t logBlk, struct driverInfo *drv)  
 __Prameters__  
-logBlk: Logical block number number  
+logBlk: Logical block number  
 drv: Pointer to the driver information structure  
 __Return Value__  
 None  
@@ -189,7 +189,7 @@ __Figure 10 Merge Two Blocks__
 
 
 
-## 4. Source Code
+## 4. Source Code  
 There is Virtual Studio 2013 project included for logical to physical transition simulation. Using a file to act as Nor Flash. File read/write in low level Nor flash read/write function. It can be easily porting to any other platform.  
 
 
